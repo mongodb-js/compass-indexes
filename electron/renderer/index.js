@@ -25,7 +25,7 @@ activate(appRegistry);
 
 const localAppRegistry = new AppRegistry();
 const store = configureStore({
-  namespace: 'echo.artists',
+  namespace: 'venues.restaurants',
   isReadonly: false,
   localAppRegistry: localAppRegistry,
   globalAppRegistry: appRegistry
