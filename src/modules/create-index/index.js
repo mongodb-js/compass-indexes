@@ -38,12 +38,18 @@ import isUnique, {
 import isTtl, {
   INITIAL_STATE as IS_TTL_INITIAL_STATE
 } from 'modules/create-index/is-ttl';
+import isWildcard, {
+  INITIAL_STATE as IS_WILDCARD_INITIAL_STATE
+} from 'modules/create-index/is-wildcard';
 import isPartialFilterExpression, {
   INITIAL_STATE as IS_PARTIAL_FILTER_EXPRESSION_INITIAL_STATE
 } from 'modules/create-index/is-partial-filter-expression';
 import ttl, {
   INITIAL_STATE as TTL_INITIAL_STATE
 } from 'modules/create-index/ttl';
+import wildcardProjection, {
+  INITIAL_STATE as WILDCARD_PROJECTION_INITIAL_STATE
+} from 'modules/create-index/wildcard-projection';
 import partialFilterExpression, {
   INITIAL_STATE as PARTIAL_FILTER_EXPRESSION_INITIAL_STATE
 } from 'modules/create-index/partial-filter-expression';
@@ -76,8 +82,10 @@ const reducer = combineReducers({
   isBackground,
   isUnique,
   isTtl,
+  isWildcard,
   isPartialFilterExpression,
   ttl,
+  wildcardProjection,
   partialFilterExpression,
   name,
   namespace
@@ -105,8 +113,10 @@ const rootReducer = (state, action) => {
       isBackground: IS_BACKGROUND_INITIAL_STATE,
       isUnique: IS_UNIQUE_INITIAL_STATE,
       isTtl: IS_TTL_INITIAL_STATE,
+      isWildcard: IS_WILDCARD_INITIAL_STATE,
       isPartialFilterExpression: IS_PARTIAL_FILTER_EXPRESSION_INITIAL_STATE,
       ttl: TTL_INITIAL_STATE,
+      wildcardProjection: WILDCARD_PROJECTION_INITIAL_STATE,
       partialFilterExpression: PARTIAL_FILTER_EXPRESSION_INITIAL_STATE,
       name: NAME_INITIAL_STATE,
       namespace: NAMESPACE_INITIAL_STATE
@@ -157,16 +167,26 @@ export const createIndex = () => {
         return;
       }
     }
-    try {
-      if (state.isPartialFilterExpression) {
-        options.partialFilterExpression = EJSON.parse(state.partialFilterExpression);
+    if (state.isWildcard) {
+      try {
+        options.wildcardProjection = EJSON.parse(state.wildcardProjection);
+      } catch (err) {
+        dispatch(handleError(`Bad WildcardProjection: ${String(err)}`));
+        return;
       }
-    } catch (err) {
-      dispatch(handleError(`Bad PartialFilterExpression: ${String(err)}`));
-      return;
+    }
+    if (state.isPartialFilterExpression) {
+      try {
+        options.partialFilterExpression = EJSON.parse(state.partialFilterExpression);
+      } catch (err) {
+        dispatch(handleError(`Bad PartialFilterExpression: ${String(err)}`));
+        return;
+      }
     }
     dispatch(toggleInProgress(true));
     const ns = state.namespace;
+
+    console.log(`creating index "${JSON.stringify(spec)} with options ${JSON.stringify(options)}`);
 
     state.dataService.createIndex(ns, spec, options, (createErr) => {
       if (!createErr) {
