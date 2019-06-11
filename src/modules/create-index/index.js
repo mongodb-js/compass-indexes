@@ -56,9 +56,7 @@ import partialFilterExpression, {
 import name, {
   INITIAL_STATE as NAME_INITIAL_STATE
 } from 'modules/create-index/name';
-import namespace, {
-  INITIAL_STATE as NAMESPACE_INITIAL_STATE
-} from 'modules/namespace';
+import namespace from 'modules/namespace';
 
 import schemaFields from 'modules/create-index/schema-fields';
 import { RESET_FORM } from 'modules/reset-form';
@@ -118,8 +116,7 @@ const rootReducer = (state, action) => {
       ttl: TTL_INITIAL_STATE,
       wildcardProjection: WILDCARD_PROJECTION_INITIAL_STATE,
       partialFilterExpression: PARTIAL_FILTER_EXPRESSION_INITIAL_STATE,
-      name: NAME_INITIAL_STATE,
-      namespace: NAMESPACE_INITIAL_STATE
+      name: NAME_INITIAL_STATE
     };
   }
   return reducer(state, action);
@@ -155,7 +152,8 @@ export const createIndex = () => {
     options.unique = state.isUnique;
     options.name = state.name;
     if (state.name === '') {
-      options.name = `${state.fields[0].name}_${spec[state.fields[0].name]}`;
+      const n = `${state.fields[0].name}_${spec[state.fields[0].name]}`;
+      options.name = n.replace(/\$\*\*/gi, 'wildcard');
     }
     if (state.isCustomCollation) {
       options.collation = state.collation;
