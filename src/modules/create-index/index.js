@@ -184,8 +184,6 @@ export const createIndex = () => {
     dispatch(toggleInProgress(true));
     const ns = state.namespace;
 
-    console.log(`creating index "${JSON.stringify(spec)} with options ${JSON.stringify(options)}`);
-
     state.dataService.createIndex(ns, spec, options, (createErr) => {
       if (!createErr) {
         dispatch(reset());
