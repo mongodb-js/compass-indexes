@@ -66,7 +66,7 @@ class IndexDefinitionType extends PureComponent {
    * @returns {React.Component} The index definition.
    */
   render() {
-    const fields = map(this.props.index.fields.serialize(), (field) => {
+    const fields = map(this.props.index.fields, (field) => {
       return (
         <span key={field.field} className={classnames(styles['index-definition-type-pair'])}>
           <span className={classnames(styles['index-definition-type-pair-field'])}>

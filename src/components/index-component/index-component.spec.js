@@ -13,7 +13,7 @@ import DropColumn from 'components/drop-column';
 
 const index = {
   name: 'a', type: 'regular', fields: {serialize: () => {}},
-  size: 10, relativeSize: 10
+  size: 10
 };
 
 describe('index-component [Component]', () => {

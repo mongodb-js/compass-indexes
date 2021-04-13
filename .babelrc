@@ -5,7 +5,7 @@
     },
     "test": {
       "presets": [
-        ["env"]
+        ["env", { "targets": { "node": "12" } }]
       ],
       "plugins": [
         "react-hot-loader/babel",
@@ -18,7 +18,7 @@
   },
   "presets": [
     "react",
-    ["env", { "modules": false }]
+    ["env", { "targets": { "node": "12" } }]
   ],
   "plugins": [
     "react-hot-loader/babel",

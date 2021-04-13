@@ -1,10 +1,8 @@
 const debug = require('debug')('mongodb-compass:modules:indexes');
 
-import IndexModel from 'mongodb-index-model';
-import map from 'lodash.map';
-import max from 'lodash.max';
 import { handleError } from 'modules/error';
 import { localAppRegistryEmit } from 'mongodb-redux-common/app-registry';
+import fetchIndexes from './fetch-indexes';
 
 /**
  * The module action prefix.
@@ -95,32 +93,6 @@ const _field = (f) => {
 };
 
 /**
- * Converts the raw index data to Index models and does calculations.
- *
- * @param {Array} indexes - The indexes.
- *
- * @returns {Array} The index models.
- */
-const _convertToModels = (indexes) => {
-  const maxSize = max(indexes.map((index) => {
-    return index.size;
-  }));
-  return map(indexes, (index) => {
-    const model = new IndexModel(new IndexModel().parse(index));
-    model.relativeSize = model.size / maxSize * 100;
-    return model;
-  });
-};
-
-export const modelAndSort = (indexes, sortColumn, sortOrder) => {
-  return _convertToModels(indexes).sort(
-    _comparator(
-      _field(sortColumn),
-      sortOrder)
-  );
-};
-
-/**
  * Data Service attaches string message property for some errors, but not all
  * that can happen during index creation/dropping. Check first for data service
  * custom error, then node driver errmsg, lastly use default error message.
@@ -198,23 +170,23 @@ export const loadIndexesFromDb = () => {
       dispatch(loadIndexes([]));
       dispatch(localAppRegistryEmit('indexes-changed', []));
     } else if (state.dataService && state.dataService.isConnected()) {
-      const ns = state.namespace;
-      state.dataService.indexes(state.namespace, {}, (err, indexes) => {
-        if (err) {
+      fetchIndexes(state.dataService, state.namespace)
+        .then(indexes => {
+          const sortedIndexes = indexes.sort(
+            _comparator(
+              _field(state.sortColumn),
+              state.sortOrder
+            )
+          );
+          dispatch(loadIndexes(sortedIndexes));
+          dispatch(localAppRegistryEmit('indexes-changed', sortedIndexes));
+        })
+        .catch(err => {
+          debug('error loading indexes', err);
           dispatch(handleError(parseErrorMsg(err)));
           dispatch(loadIndexes([]));
           dispatch(localAppRegistryEmit('indexes-changed', []));
-        } else {
-          // Set the `ns` field manually as it is not returned from the server
-          // since version 4.4.
-          for (const index of indexes) {
-            index.ns = ns;
-          }
-          const ixs = modelAndSort(indexes, state.sortColumn, state.sortOrder);
-          dispatch(loadIndexes(ixs));
-          dispatch(localAppRegistryEmit('indexes-changed', ixs));
-        }
-      });
+        });
     } else if (state.dataService && !state.dataService.isConnected()) {
       debug(
         'warning: trying to load indexes but dataService is disconnected',
